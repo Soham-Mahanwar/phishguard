@@ -1,0 +1,9 @@
+{
+  "name": "KisanSetu-Final",
+  "description": "AI-powered crop pricing and smart support for farmers.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
