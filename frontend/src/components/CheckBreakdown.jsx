@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 const STATUS_STYLES = {
   pass: { label: "Pass", classes: "bg-green-500/15 text-green-400 border-green-500/30" },
@@ -12,14 +13,20 @@ const CHECK_LABELS = {
   page_scrape: "Page Content Analysis",
   redirect_chain: "Redirect Chain",
   typosquat: "Brand Typosquat Match",
+  mx_check: "MX (Mail) Records",
 };
 
-function CheckRow({ id, check }) {
+function CheckRow({ id, check, index }) {
   const [open, setOpen] = useState(false);
   const style = STATUS_STYLES[check.status] || STATUS_STYLES.unknown;
 
   return (
-    <div className="border border-navy-700 rounded-lg overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.06, ease: "easeOut" }}
+      className="border border-navy-700 rounded-lg overflow-hidden"
+    >
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-3 bg-navy-800 hover:bg-navy-700 transition-colors text-left"
@@ -37,15 +44,15 @@ function CheckRow({ id, check }) {
           {JSON.stringify(check.details, null, 2)}
         </pre>
       )}
-    </div>
+    </motion.div>
   );
 }
 
 export default function CheckBreakdown({ breakdown }) {
   return (
     <div className="space-y-2">
-      {Object.entries(breakdown).map(([id, check]) => (
-        <CheckRow key={id} id={id} check={check} />
+      {Object.entries(breakdown).map(([id, check], index) => (
+        <CheckRow key={id} id={id} check={check} index={index} />
       ))}
     </div>
   );

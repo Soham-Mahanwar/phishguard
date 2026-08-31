@@ -16,6 +16,7 @@ from app.tools import (
     _page_scrape,
     _redirect_chain,
     _typosquat_check,
+    _mx_check,
     cache_lookup,
 )
 
@@ -49,6 +50,11 @@ def run_recon(url: str) -> dict:
     tool_outputs["whois"] = whois_result
     if whois_result.get("error"):
         notes.append("WHOIS lookup failed - domain age signal will be treated as unknown.")
+
+    mx_result = _mx_check(url)
+    tool_outputs["mx_check"] = mx_result
+    if mx_result.get("has_mx_records") is False:
+        notes.append("No MX records found for domain - noted as a mild suspicious signal.")
 
     scrape_result = _page_scrape(url)
     tool_outputs["page_scrape"] = scrape_result

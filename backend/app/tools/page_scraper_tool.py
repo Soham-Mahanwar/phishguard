@@ -31,6 +31,17 @@ URGENCY_KEYWORDS = [
     "final notice",
     "confirm your password",
     "security alert",
+    # Hindi/Hinglish urgency phrases
+    "abhi verify karein",
+    "account block ho jayega",
+    "turant sampark karein",
+    "kyc update zaroori hai",
+    "turant kar",
+    "account suspend ho jayega",
+    "abhi click karein",
+    "jaldi karein",
+    "warna account band",
+    "otp share karein",
 ]
 
 

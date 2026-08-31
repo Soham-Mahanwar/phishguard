@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   Database,
   Moon,
+  Sun,
   Link2,
   Globe,
   ClipboardCopy,
@@ -120,10 +121,37 @@ function smoothScrollTo(id) {
   }
 }
 
+function useDocsDarkMode() {
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      const stored = localStorage.getItem("docs-theme");
+      if (stored) return stored === "dark";
+      return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+    try {
+      localStorage.setItem("docs-theme", isDark ? "dark" : "light");
+    } catch {
+      // localStorage unavailable — theme just won't persist across reloads
+    }
+    return () => {
+      document.documentElement.classList.remove("dark");
+    };
+  }, [isDark]);
+
+  return [isDark, setIsDark];
+}
+
 export default function DocsPage() {
   const sectionIds = SECTIONS.map((s) => s.id);
   const activeId = useScrollSpy(sectionIds);
   const [copied, setCopied] = useState(false);
+  const [isDark, setIsDark] = useDocsDarkMode();
 
   function copyFormula() {
     navigator.clipboard.writeText(FORMULA_TEXT).then(() => {
@@ -156,8 +184,18 @@ export default function DocsPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button className="p-2 cursor-pointer transition-all duration-200 hover:bg-doc-surface-container-low rounded-full">
-            <Moon className="text-doc-primary" size={20} />
+          <button
+            type="button"
+            onClick={() => setIsDark((prev) => !prev)}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            aria-pressed={isDark}
+            className="p-2 cursor-pointer transition-all duration-200 hover:bg-doc-surface-container-low rounded-full"
+          >
+            {isDark ? (
+              <Sun className="text-doc-primary" size={20} />
+            ) : (
+              <Moon className="text-doc-primary" size={20} />
+            )}
           </button>
         </div>
       </header>
@@ -219,7 +257,7 @@ export default function DocsPage() {
                   <span className="text-xs font-body font-medium mt-2">URL</span>
                 </div>
                 <div className="doc-flow-line w-8" />
-                <div className="flex flex-col gap-2 p-3 bg-white border border-doc-outline-variant rounded-lg min-w-fit">
+                <div className="flex flex-col gap-2 p-3 bg-doc-surface-container-lowest border border-doc-outline-variant rounded-lg min-w-fit">
                   <div className="flex gap-2">
                     <Lock className="text-doc-primary" size={16} />
                     <Globe className="text-doc-primary" size={16} />
@@ -228,14 +266,14 @@ export default function DocsPage() {
                   <span className="text-[10px] font-body font-medium text-center">Recon (5 tools)</span>
                 </div>
                 <div className="doc-flow-line w-8" />
-                <div className="flex flex-col gap-2 p-3 bg-white border border-doc-outline-variant rounded-lg min-w-fit">
+                <div className="flex flex-col gap-2 p-3 bg-doc-surface-container-lowest border border-doc-outline-variant rounded-lg min-w-fit">
                   <div className="flex gap-2">
                     <Sigma className="text-doc-tertiary" size={16} />
                   </div>
                   <span className="text-[10px] font-body font-medium text-center">Scoring</span>
                 </div>
                 <div className="doc-flow-line w-8" />
-                <div className="flex flex-col gap-2 p-3 bg-white border border-doc-outline-variant rounded-lg min-w-fit">
+                <div className="flex flex-col gap-2 p-3 bg-doc-surface-container-lowest border border-doc-outline-variant rounded-lg min-w-fit">
                   <div className="flex gap-2">
                     <Brain className="text-doc-tertiary" size={16} />
                   </div>
@@ -338,7 +376,7 @@ export default function DocsPage() {
                   </thead>
                   <tbody>
                     {SCORING_ROWS.map((row) => (
-                      <tr key={row.signal} className="border-t border-doc-outline-variant bg-white">
+                      <tr key={row.signal} className="border-t border-doc-outline-variant bg-doc-surface-container-lowest">
                         <td className="px-4 py-3 text-doc-on-surface">{row.signal}</td>
                         <td className="px-4 py-3 text-doc-primary font-semibold">{row.points}</td>
                         <td className="px-4 py-3 text-doc-on-surface-variant">

@@ -18,6 +18,8 @@ def _ssl_check(url: str) -> dict:
         "issuer": "unknown",
         "expires_at": "unknown",
         "days_until_expiry": None,
+        "issued_at": "unknown",
+        "days_since_issued": None,
         "error": None,
     }
     try:
@@ -38,6 +40,12 @@ def _ssl_check(url: str) -> dict:
                     expiry_dt = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z")
                     result["expires_at"] = expiry_dt.isoformat()
                     result["days_until_expiry"] = (expiry_dt - datetime.utcnow()).days
+
+                not_before = cert.get("notBefore")
+                if not_before:
+                    issued_dt = datetime.strptime(not_before, "%b %d %H:%M:%S %Y %Z")
+                    result["issued_at"] = issued_dt.isoformat()
+                    result["days_since_issued"] = (datetime.utcnow() - issued_dt).days
     except ssl.SSLCertVerificationError as e:
         # HTTPS is reachable but certificate is invalid/self-signed/expired - a strong phishing signal
         result["https_available"] = True

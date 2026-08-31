@@ -23,6 +23,8 @@ WEIGHTS = {
     "redirect_domain_mismatch": (15, "Final redirect landed on a different domain"),
     "typosquat_match": (25, "Domain is a close Levenshtein match to a known brand domain"),
     "external_scripts_many": (5, "Page loads scripts from several external domains"),
+    "fresh_cert_new_domain": (18, "Certificate issued <7 days ago on a domain registered <30 days ago"),
+    "no_mx_records": (10, "Domain has no MX (mail) records configured"),
 }
 
 
@@ -105,6 +107,25 @@ def compute_risk_score(signals: dict[str, Any]) -> dict:
         pts = WEIGHTS["external_scripts_many"][0]
         total += pts
         contributions.append({"signal": "external_scripts_many", "points": pts, "reason": WEIGHTS["external_scripts_many"][1]})
+
+    days_since_issued = signals.get("days_since_issued")
+    if (
+        isinstance(days_since_issued, (int, float))
+        and days_since_issued < 7
+        and isinstance(age, (int, float))
+        and age < 30
+    ):
+        pts = WEIGHTS["fresh_cert_new_domain"][0]
+        total += pts
+        contributions.append({
+            "signal": "fresh_cert_new_domain", "points": pts,
+            "reason": WEIGHTS["fresh_cert_new_domain"][1],
+        })
+
+    if signals.get("has_mx_records") is False:
+        pts = WEIGHTS["no_mx_records"][0]
+        total += pts
+        contributions.append({"signal": "no_mx_records", "points": pts, "reason": WEIGHTS["no_mx_records"][1]})
 
     score = min(100.0, total)
     return {"score": score, "contributions": contributions}

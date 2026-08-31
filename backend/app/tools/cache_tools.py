@@ -43,8 +43,12 @@ def cache_lookup(url: str) -> dict | None:
         session.close()
 
 
-def cache_save(url: str, result: dict) -> None:
-    """Persists a completed check result. Also serves as the /history data source."""
+def cache_save(url: str, result: dict, user_id: int | None = None) -> None:
+    """Persists a completed check result. Also serves as the /history data source.
+
+    user_id is optional and defaults to None (anonymous) - passing it is
+    purely additive and never changes behavior for callers that omit it.
+    """
     domain = extract_domain(url)
     session = SessionLocal()
     try:
@@ -56,6 +60,7 @@ def cache_save(url: str, result: dict) -> None:
             breakdown=result["breakdown"],
             ai_explanation=result.get("ai_explanation"),
             ai_explanation_available=1 if result.get("ai_explanation_available") else 0,
+            user_id=user_id,
         )
         session.add(row)
         session.commit()

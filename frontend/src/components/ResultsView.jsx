@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import RiskGauge from "./RiskGauge.jsx";
 import CheckBreakdown from "./CheckBreakdown.jsx";
 
@@ -7,13 +8,34 @@ const VERDICT_STYLES = {
   Dangerous: "bg-red-500/10 border-red-500/40 text-red-400",
 };
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12 },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
+
 export default function ResultsView({ result, url }) {
   if (!result) return null;
   const verdictStyle = VERDICT_STYLES[result.verdict] || VERDICT_STYLES.Suspicious;
 
   return (
-    <div className="mt-8 space-y-6">
-      <div className={`rounded-xl border p-6 flex flex-col md:flex-row items-center justify-between gap-6 ${verdictStyle}`}>
+    <motion.div
+      className="mt-8 space-y-6"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div
+        variants={item}
+        className={`rounded-xl border p-6 flex flex-col md:flex-row items-center justify-between gap-6 ${verdictStyle}`}
+      >
         <div>
           <div className="text-sm text-slate-400 mb-1 break-all">{url}</div>
           <div className="text-2xl font-bold">{result.verdict}</div>
@@ -22,9 +44,9 @@ export default function ResultsView({ result, url }) {
           )}
         </div>
         <RiskGauge score={result.risk_score} verdict={result.verdict} />
-      </div>
+      </motion.div>
 
-      <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-5">
+      <motion.div variants={item} className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-5">
         <div className="text-sm font-semibold text-blue-400 mb-2 flex items-center gap-2">
           AI Explanation
           {!result.ai_explanation_available && (
@@ -34,12 +56,12 @@ export default function ResultsView({ result, url }) {
           )}
         </div>
         <p className="text-slate-200 leading-relaxed">{result.ai_explanation}</p>
-      </div>
+      </motion.div>
 
-      <div>
+      <motion.div variants={item}>
         <h3 className="text-slate-300 font-semibold mb-3">Per-Check Breakdown</h3>
         <CheckBreakdown breakdown={result.breakdown} />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

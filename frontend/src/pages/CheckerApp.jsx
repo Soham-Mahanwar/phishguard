@@ -1,33 +1,35 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import AgentProgress from "../components/AgentProgress.jsx";
 import ResultsView from "../components/ResultsView.jsx";
 import HistoryView from "../components/HistoryView.jsx";
+import QrUpload from "../components/QrUpload.jsx";
+import TextPaste from "../components/TextPaste.jsx";
+import TextScanResults from "../components/TextScanResults.jsx";
+import { checkUrl } from "../api/checkUrl.js";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 export default function CheckerApp() {
+  const { user, logout } = useAuth();
   const [url, setUrl] = useState("");
   const [tab, setTab] = useState("check");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [checkedUrl, setCheckedUrl] = useState("");
+  const [qrResult, setQrResult] = useState(null);
+  const [textResult, setTextResult] = useState(null);
 
   async function handleCheck() {
     if (!url.trim()) return;
     setLoading(true);
     setError(null);
     setResult(null);
+    setQrResult(null);
+    setTextResult(null);
     try {
-      const resp = await fetch("/api/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      if (!resp.ok) {
-        const detail = await resp.json().catch(() => ({}));
-        throw new Error(detail.detail || `Request failed (${resp.status})`);
-      }
-      const data = await resp.json();
+      const data = await checkUrl(url);
       setResult(data);
       setCheckedUrl(url);
     } catch (e) {
@@ -62,6 +64,30 @@ export default function CheckerApp() {
             >
               History
             </button>
+            <Link
+              to="/shadow"
+              className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              Shadow Protect
+            </Link>
+            {user ? (
+              <div className="flex items-center gap-2 pl-2 ml-1 border-l border-navy-700">
+                <span className="text-sm text-slate-400 truncate max-w-[160px]">{user.email}</span>
+                <button
+                  onClick={logout}
+                  className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  Log out
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                Log in
+              </Link>
+            )}
           </nav>
         </div>
       </header>
@@ -78,13 +104,15 @@ export default function CheckerApp() {
                 placeholder="Enter a URL, e.g. sbi-secure-login.co.in"
                 className="flex-1 rounded-lg bg-navy-800 border border-navy-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
-              <button
+              <motion.button
                 onClick={handleCheck}
                 disabled={loading}
+                whileHover={{ scale: loading ? 1 : 1.03 }}
+                whileTap={{ scale: loading ? 1 : 0.97 }}
                 className="px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-400 disabled:bg-navy-700 disabled:text-slate-500 text-navy-950 font-semibold transition-colors"
               >
                 {loading ? "Checking..." : "Check"}
-              </button>
+              </motion.button>
             </div>
 
             {error && (
@@ -95,6 +123,34 @@ export default function CheckerApp() {
 
             {loading && <AgentProgress />}
             {!loading && result && <ResultsView result={result} url={checkedUrl} />}
+
+            <div className="mt-8 grid gap-5 md:grid-cols-2">
+              <QrUpload
+                onResult={(data) => {
+                  setResult(null);
+                  setTextResult(null);
+                  setQrResult(data);
+                }}
+              />
+              <TextPaste
+                onResult={(data) => {
+                  setResult(null);
+                  setQrResult(null);
+                  setTextResult(data);
+                }}
+              />
+            </div>
+
+            {qrResult && (
+              <div className="mt-8">
+                <div className="text-xs text-slate-500 mb-2 break-all">
+                  Decoded QR content: {qrResult.decoded_text}
+                </div>
+                <ResultsView result={qrResult} url={qrResult.url} />
+              </div>
+            )}
+
+            {textResult && <TextScanResults data={textResult} />}
           </>
         ) : (
           <HistoryView />

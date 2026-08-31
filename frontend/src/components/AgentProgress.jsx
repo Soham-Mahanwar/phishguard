@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const STEPS = [
   "Recon agent choosing which checks to run...",
@@ -25,15 +26,29 @@ export default function AgentProgress() {
       </div>
       <ul className="space-y-2">
         {STEPS.map((step, idx) => (
-          <li
+          <motion.li
             key={step}
-            className={`text-sm flex items-center gap-2 transition-opacity ${
-              idx <= stepIndex ? "opacity-100 text-slate-200" : "opacity-40 text-slate-500"
-            }`}
+            initial={{ opacity: 0.4, x: -6 }}
+            animate={{
+              opacity: idx <= stepIndex ? 1 : 0.4,
+              x: 0,
+              color: idx <= stepIndex ? "#e2e8f0" : "#64748b",
+            }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="text-sm flex items-center gap-2"
           >
-            <span>{idx < stepIndex ? "✓" : idx === stepIndex ? "…" : "○"}</span>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={idx < stepIndex ? "done" : idx === stepIndex ? "active" : "pending"}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.25 }}
+              >
+                {idx < stepIndex ? "✓" : idx === stepIndex ? "…" : "○"}
+              </motion.span>
+            </AnimatePresence>
             {step}
-          </li>
+          </motion.li>
         ))}
       </ul>
     </div>
