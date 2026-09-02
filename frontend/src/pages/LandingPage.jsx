@@ -269,6 +269,14 @@ export default function LandingPage() {
                   {state === "loading" ? "Checking..." : "Check Now"}
                 </button>
               </div>
+
+              {state !== "idle" && (
+                <div className="relative glass-card p-6 md:p-8 rounded-[32px] border-white/5 overflow-hidden shadow-2xl mt-4 text-left">
+                  {state === "loading" && <DemoCardLoading />}
+                  {state === "error" && <DemoCardError message={error} />}
+                  {state === "result" && result && <DemoCardResult result={result} />}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap justify-center gap-8 md:gap-12 text-land-on-surface-variant">
