@@ -34,7 +34,16 @@ def compute_scoring_payload(tool_outputs: dict, threat_context: str | None = Non
     mx_r = tool_outputs.get("mx_check", {})
 
     signals = {
-        "https_available": ssl_r.get("https_available") if not ssl_r.get("error") or ssl_r.get("https_available") else None,
+        # _ssl_check() always returns a definitive True/False for
+        # https_available (it defaults to False and every failure path
+        # leaves it False; only a successful/invalid-cert HTTPS connection
+        # sets it True) - so this is never "unknown" and must not be nulled
+        # out just because `error` is also set. Previously this collapsed to
+        # None whenever a plain-HTTP-only site's connection attempt failed
+        # (https_available=False + error="connection failed: ..."), which
+        # silently dropped the "no_https" scoring signal (15 pts) for the
+        # single most basic phishing indicator - a site with no HTTPS at all.
+        "https_available": ssl_r.get("https_available"),
         "cert_valid": ssl_r.get("cert_valid") if ssl_r.get("https_available") else None,
         "domain_age_days": whois_r.get("domain_age_days") if whois_r.get("domain_age_days") != "unknown" else None,
         "has_login_form": scrape_r.get("has_login_form") if not scrape_r.get("error") else None,
@@ -77,11 +86,12 @@ def build_breakdown(tool_outputs: dict) -> dict:
     breakdown = {}
 
     ssl_r = tool_outputs.get("ssl_check", {})
-    if ssl_r.get("error") and not ssl_r.get("https_available"):
-        breakdown["ssl_check"] = {"status": "unknown", "details": ssl_r}
-    else:
-        status = "pass" if ssl_r.get("https_available") and ssl_r.get("cert_valid") else "fail"
-        breakdown["ssl_check"] = {"status": status, "details": ssl_r}
+    # ssl_check always yields a definitive https_available/cert_valid result
+    # (see the https_available comment above) even when `error` is set, so
+    # this is a real pass/fail, not "unknown" - reporting "unknown" here
+    # previously hid genuine no-HTTPS/invalid-cert failures from the UI.
+    status = "pass" if ssl_r.get("https_available") and ssl_r.get("cert_valid") else "fail"
+    breakdown["ssl_check"] = {"status": status, "details": ssl_r}
 
     whois_r = tool_outputs.get("whois", {})
     if whois_r.get("domain_age_days") in (None, "unknown"):
